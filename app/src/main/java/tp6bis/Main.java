@@ -8,8 +8,7 @@ public class Main {
         club.setPoids(14.5);
         DAO<Club> clubDao = new ClubDAO();
         //clubDao.create(club);
-        club2.setId(8);
-        club2.setFabricat("Fabricante");
-        clubDao.update(club2);
+        club2.setId(12);
+        clubDao.delete(club2);
     }
 }

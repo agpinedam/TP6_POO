@@ -49,7 +49,19 @@ public class ClubDAO extends DAO<Club>{
 
     @Override
     public void delete(Club obj) {
-        System.out.println("hi");
+        try {
+            
+            this.connect    
+                .createStatement(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                    ResultSet.CONCUR_UPDATABLE
+                 ).executeUpdate(
+                    "DELETE FROM club WHERE id = " + obj.getId()
+                 );
+
+        } catch (SQLException e) {
+                e.printStackTrace();
+        }
     }
 
     @Override
