@@ -3,7 +3,6 @@ package tp6bis;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class ClubDAO extends DAO<Club>{
     @Override
@@ -26,8 +25,21 @@ public class ClubDAO extends DAO<Club>{
 
     @Override
     public Club update(Club obj) {
-        System.out.println("hi");
-        return obj;
+        try {
+            this .connect    
+                 .createStatement(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                    ResultSet.CONCUR_UPDATABLE
+                 ).executeUpdate(
+                    "UPDATE club SET fabricant = '" + obj.getFabricat() + "'"+
+                    " WHERE id = " + obj.getId()
+                 );
+        
+        obj = this.find(obj.getId());
+        } catch (SQLException e) {
+                e.printStackTrace();
+        }
+    return obj;
     }
 
     @Override
