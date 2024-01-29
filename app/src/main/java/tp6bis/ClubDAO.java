@@ -25,13 +25,18 @@ public class ClubDAO extends DAO<Club>{
 
     @Override
     public Club update(Club obj) {
+        Club club = new Club();
+        club = find(obj.getId());
+        int version = club.getVersion() + 1 ;
         try {
             this .connect    
                  .createStatement(
                     ResultSet.TYPE_SCROLL_INSENSITIVE, 
                     ResultSet.CONCUR_UPDATABLE
                  ).executeUpdate(
-                    "UPDATE club SET fabricant = '" + obj.getFabricat() + "'"+
+                    "UPDATE club SET fabricant = '" + obj.getFabricat() + "',"+
+                    " poids = " + obj.getPoids() + ","+
+                    " version = " + version + " "+
                     " WHERE id = " + obj.getId()
                  );
         
@@ -63,7 +68,8 @@ public class ClubDAO extends DAO<Club>{
                                         id, 
                                         result.getString("fabricant") 
                                     );
-            
+            club.setVersion(result.getInt("version"));
+            club.setPoids(result.getDouble("poids"));
             } catch (SQLException e) {
                     e.printStackTrace();
             }
