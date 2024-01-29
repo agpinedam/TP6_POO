@@ -2,6 +2,7 @@ package tp6bis;
 
 import java.sql.Connection;
 
+
 public abstract class DAO<T> {
 
     public Connection connect = ConnectionPostgreSQL.getInstance();

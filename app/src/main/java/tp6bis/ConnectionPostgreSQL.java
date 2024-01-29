@@ -12,16 +12,16 @@ import java.sql.Statement;
  */
 public class ConnectionPostgreSQL{
 
-    private final String url = "jdbc:postgresql://localhost:5432/GolfClub";
-    private final String user = "postgres";
-    private final String password = "postgres";
+    private final static String url = "jdbc:postgresql://localhost:5432/GolfClub";
+    private final static String user = "postgres";
+    private final static String password = "postgres";
 
     /**
      * Connect to the PostgreSQL database
      *
      * @return a Connection object
      */
-    public Connection connect() {
+    public static Connection getInstance() {
         Connection conn = null;
         try {
              Class.forName("org.postgresql.Driver");
@@ -38,7 +38,7 @@ public class ConnectionPostgreSQL{
         String SQL = "SELECT count(*) FROM club";
         int count = 0;
 
-        try (Connection conn = connect();
+        try (Connection conn = getInstance();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(SQL)) {
             rs.next();
@@ -55,7 +55,7 @@ public class ConnectionPostgreSQL{
         String SQL = "INSERT INTO club (fabricant, poids,version) VALUES ('fabricant3', 10.5, 1);";
         int count = 0;
 
-        try (Connection conn = connect();
+        try (Connection conn = getInstance();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(SQL)) {
             rs.next();
@@ -73,12 +73,8 @@ public class ConnectionPostgreSQL{
      */
     public static void main(String[] args) {
         ConnectionPostgreSQL app = new ConnectionPostgreSQL();
-        app.connect();
+        app.getInstance();
         app.createAnObject();
         app.getNumberOfObjects();
-    }
-
-    public static Connection getInstance() {    
-        return null;
     }
 }

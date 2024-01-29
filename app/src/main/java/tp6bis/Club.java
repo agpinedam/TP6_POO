@@ -7,9 +7,9 @@ public class Club {
     private String fabricant;
     private double poids;
     
-    public Club(long id, String fabricant) {
+    public Club(long id, String fabricant){
         this.id = id;
-        this.fabricant = fabricant; 
+        this.fabricant = fabricant;
     }
 
     public Club() {

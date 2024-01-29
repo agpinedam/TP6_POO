@@ -3,24 +3,24 @@ package tp6bis;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class ClubDAO extends DAO<Club>{
     @Override
     public Club create(Club obj) {
         try {
             PreparedStatement prepare = this    .connect
-                                                .prepareStatement(
-                                                    "INSERT INTO club (version, fabricant, poids) VALUES(? , ? , ?)"
-                                                );
-                prepare.setInt(1, 0);
-                prepare.setString(2, obj.getFabricat());
-                prepare.setDouble(3, obj.getPoids());
+                                                    .prepareStatement(
+                                                        "INSERT INTO club (fabricant, poids, version) VALUES(?, ?, ?)"
+                                                    );
+                prepare.setString(1, obj.getFabricat());
+                prepare.setDouble(2, obj.getPoids());
+                prepare.setInt(3,0);
+                prepare.executeUpdate();    
                 
-                prepare.executeUpdate();
         } catch (SQLException e) {
                 e.printStackTrace();
         }
-        System.out.println("Finito");
         return obj;
     }
 
@@ -44,18 +44,17 @@ public class ClubDAO extends DAO<Club>{
                                                 ResultSet.TYPE_SCROLL_INSENSITIVE, 
                                                 ResultSet.CONCUR_UPDATABLE
                                              ).executeQuery(
-                                                "SELECT id, version, fabricant, poids\n FROM club" 
+                                                "SELECT * FROM club WHERE id = " + id
                                              );
-            System.out.println(result);
             if(result.first())
                     club = new Club(
                                         id, 
                                         result.getString("fabricant") 
                                     );
             
-        } catch (SQLException e) {
+            } catch (SQLException e) {
                     e.printStackTrace();
-        }
+            }
     return club;
     }   
 }
