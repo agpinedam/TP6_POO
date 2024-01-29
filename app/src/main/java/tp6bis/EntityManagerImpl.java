@@ -13,7 +13,7 @@ public class EntityManagerImpl {
     private static final String PASSWORD = "postgres";
 
     // Method to create a table in PostgreSQL based on an object of a class
-    public static void persistance(Object object) {
+    public static void createTableFromClass(Object object) {
         // Get the class name
         String className = object.getClass().getSimpleName();
 
@@ -33,9 +33,9 @@ public class EntityManagerImpl {
             String fieldName = field.getName();
             String fieldType = field.getType().getSimpleName();
 
-            // Adjust the id field to be serial (autoincrement)
+            // Adjust the id field to be serial (autoincrement) and the primary key
             if (fieldName.equals("id")) {
-                sqlQuery.append(fieldName).append(" SERIAL, ");
+                sqlQuery.append(fieldName).append(" SERIAL PRIMARY KEY, ");
             } else {
                 // Assume all other fields are of primitive type or String in this example
                 sqlQuery.append(fieldName).append(" ").append(getSQLDataType(fieldType)).append(", ");
@@ -58,7 +58,7 @@ public class EntityManagerImpl {
     // Method to check if a table exists in the database
     private static boolean tableExists(String tableName) {
         try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-            Statement statement = connection.createStatement()) {
+             Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT to_regclass('" + tableName + "')");
             resultSet.next();
             return resultSet.getString(1) != null;
@@ -90,6 +90,6 @@ public class EntityManagerImpl {
 
     public static void main(String[] args) {
         Club clubExample = new Club();
-        persistance(clubExample);
+        createTableFromClass(clubExample);
     }
 }

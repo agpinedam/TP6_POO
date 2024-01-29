@@ -11,4 +11,13 @@ class AppTest {
         App classUnderTest = new App();
         assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
     }
+
+    @Test void testPersistence() {
+        Club club = new Club();
+        club.setFabricant("Fabricant1");
+        club.setPoids(10.3);
+        
+        EntityManagerImpl em = new EntityManagerImpl();
+        //em.persist(club);
+    }
 }

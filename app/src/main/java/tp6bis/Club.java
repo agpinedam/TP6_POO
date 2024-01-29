@@ -27,10 +27,10 @@ public class Club {
     public void setVersion(int version) {
         this.version = version;
     }
-    public String getFabricat() {
+    public String getFabricant() {
         return fabricant;
     }
-    public void setFabricat(String fabricant) {
+    public void setFabricant(String fabricant) {
         this.fabricant = fabricant;
     }
     public double getPoids() {

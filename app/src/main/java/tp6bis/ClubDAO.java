@@ -12,7 +12,7 @@ public class ClubDAO extends DAO<Club>{
                                                 .prepareStatement(
                                                         "INSERT INTO club (fabricant, poids, version) VALUES(?, ?, ?)"
                                                     );
-                prepare.setString(1, obj.getFabricat());
+                prepare.setString(1, obj.getFabricant());
                 prepare.setDouble(2, obj.getPoids());
                 prepare.setInt(3,0);
                 prepare.executeUpdate();    
@@ -34,7 +34,7 @@ public class ClubDAO extends DAO<Club>{
                     ResultSet.TYPE_SCROLL_INSENSITIVE, 
                     ResultSet.CONCUR_UPDATABLE
                  ).executeUpdate(
-                    "UPDATE club SET fabricant = '" + obj.getFabricat() + "',"+
+                    "UPDATE club SET fabricant = '" + obj.getFabricant() + "',"+
                     " poids = " + obj.getPoids() + ","+
                     " version = " + version + " "+
                     " WHERE id = " + obj.getId()
