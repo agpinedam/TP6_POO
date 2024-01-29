@@ -9,7 +9,7 @@ public class ClubDAO extends DAO<Club>{
     public Club create(Club obj) {
         try {
             PreparedStatement prepare = this    .connect
-                                                    .prepareStatement(
+                                                .prepareStatement(
                                                         "INSERT INTO club (fabricant, poids, version) VALUES(?, ?, ?)"
                                                     );
                 prepare.setString(1, obj.getFabricat());
