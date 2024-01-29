@@ -6,6 +6,6 @@ public class Main {
         club.setFabricat("Fabricant2");
         club.setPoids(14.5);
         DAO<Club> clubDao = new ClubDAO();
-        clubDao.create(club);
+        clubDao.find(1);
     }
 }

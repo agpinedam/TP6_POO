@@ -2,7 +2,9 @@ package tp6bis;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -32,12 +34,48 @@ public class ConnectionPostgreSQL{
         return conn;
     }
 
+    public int getNumberOfObjects() {
+        String SQL = "SELECT count(*) FROM club";
+        int count = 0;
+
+        try (Connection conn = connect();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(SQL)) {
+            rs.next();
+            count = rs.getInt(1);
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        System.out.println("hi\n");
+        System.out.println(count);
+        return count;
+    }
+
+    public int createAnObject() {
+        String SQL = "INSERT INTO club (fabricant, poids,version) VALUES ('fabricant3', 10.5, 1);";
+        int count = 0;
+
+        try (Connection conn = connect();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(SQL)) {
+            rs.next();
+            count = rs.getInt(1);
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        System.out.println("hi\n");
+        System.out.println(count);
+        return count;
+    }
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         ConnectionPostgreSQL app = new ConnectionPostgreSQL();
         app.connect();
+        app.createAnObject();
+        app.getNumberOfObjects();
     }
 
     public static Connection getInstance() {    

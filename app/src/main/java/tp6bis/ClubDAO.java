@@ -1,10 +1,10 @@
 package tp6bis;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ClubDAO extends DAO<Club>{
-
     @Override
     public Club create(Club obj) {
         try {
@@ -26,9 +26,6 @@ public class ClubDAO extends DAO<Club>{
 
     @Override
     public Club update(Club obj) {
-        /* *
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");*/
         System.out.println("hi");
         return obj;
     }
@@ -40,12 +37,25 @@ public class ClubDAO extends DAO<Club>{
 
     @Override
     public Club find(long id) {
-        /* 
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'find'");
-        */
-        System.out.println("Hi");
-        return null;
-    }
-    
+        Club club = new Club();
+        try {
+            ResultSet result = this .connect
+                                    .createStatement(
+                                                ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                                ResultSet.CONCUR_UPDATABLE
+                                             ).executeQuery(
+                                                "SELECT id, version, fabricant, poids\n FROM club" 
+                                             );
+            System.out.println(result);
+            if(result.first())
+                    club = new Club(
+                                        id, 
+                                        result.getString("fabricant") 
+                                    );
+            
+        } catch (SQLException e) {
+                    e.printStackTrace();
+        }
+    return club;
+    }   
 }

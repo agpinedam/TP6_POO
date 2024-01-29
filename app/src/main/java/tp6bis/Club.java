@@ -4,9 +4,17 @@ public class Club {
     
     private long id;
     private int version;
-    private String fabricat;
+    private String fabricant;
     private double poids;
     
+    public Club(long id, String fabricant) {
+        this.id = id;
+        this.fabricant = fabricant; 
+    }
+
+    public Club() {
+    }
+
     public long getId() {
         return id;
     }
@@ -20,10 +28,10 @@ public class Club {
         this.version = version;
     }
     public String getFabricat() {
-        return fabricat;
+        return fabricant;
     }
-    public void setFabricat(String fabricat) {
-        this.fabricat = fabricat;
+    public void setFabricat(String fabricant) {
+        this.fabricant = fabricant;
     }
     public double getPoids() {
         return poids;
