@@ -4,7 +4,10 @@
 package tp6bis;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.sql.SQLException;
 
 class AppTest {
     @Test void appHasAGreeting() {
@@ -12,12 +15,16 @@ class AppTest {
         assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
     }
 
-    @Test void testPersistence() {
-        Club club = new Club();
-        club.setFabricant("Fabricant1");
-        club.setPoids(10.3);
-        
-        EntityManagerImpl em = new EntityManagerImpl();
-        //em.persist(club);
+    @Test
+    public void testFind() throws SQLException {
+
+    Club club = new Club();
+    club.setFabricant("ab1");
+    club.setPoids(10.5);
+    club.setId(1);
+    EntityManagerImpl em = new EntityManagerImpl();
+    Club trouve = em.<Club> find(Club.class, club.getId());
+    assertEquals(club.getFabricant(), trouve.getFabricant());
+    
     }
 }

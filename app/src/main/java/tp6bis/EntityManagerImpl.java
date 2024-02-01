@@ -3,7 +3,9 @@ package tp6bis;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 public class EntityManagerImpl {
@@ -13,7 +15,7 @@ public class EntityManagerImpl {
     private static final String PASSWORD = "postgres";
 
     // Method to create a table in PostgreSQL based on an object of a class
-    public static void createTableFromClass(Object object) {
+    public static void persist(Object object) {
         // Get the class name
         String className = object.getClass().getSimpleName();
 
@@ -88,8 +90,50 @@ public class EntityManagerImpl {
         }
     }
 
+    public <T> T find(Class<T> entityClass, long id) {
+        String tableName = entityClass.getSimpleName();
+        String query = "SELECT * FROM " + tableName + " WHERE id = ?";
+
+        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                T entity = mapResultSetToEntity(resultSet, entityClass);
+                return entity;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private static <T> T mapResultSetToEntity(ResultSet resultSet, Class<T> entityClass) throws SQLException {
+        T entity;
+        try {
+            entity = entityClass.getDeclaredConstructor().newInstance();
+
+            Field[] fields = entityClass.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+                Object value = resultSet.getObject(fieldName);
+                field.set(entity, value);
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error mapping ResultSet to entity.", e);
+        }
+
+        return entity;
+    }
+
     public static void main(String[] args) {
         Club clubExample = new Club();
-        createTableFromClass(clubExample);
+        persist(clubExample);
+        clubExample.setFabricant("ab1");
+        clubExample.setId(1);
     }
 }
