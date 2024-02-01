@@ -16,10 +16,7 @@ public class EntityManagerImpl {
 
     // Method to create a table in PostgreSQL based on an object of a class
     public void createTable(Object object) {
-        // Get the class name
         String className = object.getClass().getSimpleName();
-
-        // Check if the table already exists
         if (tableExists(className)) {
             System.out.println("Table already exists.");
             return;
