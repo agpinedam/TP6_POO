@@ -15,7 +15,7 @@ public class EntityManagerImpl {
     private static final String PASSWORD = "postgres";
 
     // Method to create a table in PostgreSQL based on an object of a class
-    public static void persist(Object object) {
+    public void createTable(Object object) {
         // Get the class name
         String className = object.getClass().getSimpleName();
 
@@ -130,10 +130,164 @@ public class EntityManagerImpl {
         return entity;
     }
 
-    public static void main(String[] args) {
-        Club clubExample = new Club();
-        persist(clubExample);
-        clubExample.setFabricant("ab1");
-        clubExample.setId(1);
+    public <T> T persist(T object) {
+        String className = object.getClass().getSimpleName();
+        Field[] fields = object.getClass().getDeclaredFields();
+
+        StringBuilder columnNames = new StringBuilder();
+        StringBuilder values = new StringBuilder();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+
+            if (!fieldName.equals("id")) {
+                columnNames.append(fieldName).append(", ");
+                values.append("?, ");
+            }
+        }
+
+        columnNames.delete(columnNames.length() - 2, columnNames.length());
+        values.delete(values.length() - 2, values.length());
+
+        String query = "INSERT INTO " + className + " (" + columnNames + ") VALUES (" + values + ")";
+
+        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            int parameterIndex = 1;
+            for (Field field : fields) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+
+                if (!fieldName.equals("id")) {
+                    Object value = field.get(object);
+                    preparedStatement.setObject(parameterIndex++, value);
+                }
+            }
+
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows > 0) {
+                // Retrieve the generated ID
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    long generatedId = generatedKeys.getLong(1);
+                    // Set the generated ID back to the object
+                    Field idField = object.getClass().getDeclaredField("id");
+                    idField.setAccessible(true);
+                    idField.set(object, generatedId);
+                    return object;
+                }
+            }
+
+        } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+
+        // Return null if creation was unsuccessful
+        return null;
+    }
+
+    public <T> T update(T object) throws IllegalAccessException, NoSuchFieldException {
+        String className = object.getClass().getSimpleName();
+        Field[] fields = object.getClass().getDeclaredFields();
+
+        StringBuilder setClause = new StringBuilder();
+
+        int version = getVersion(object);
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+
+            if (!fieldName.equals("id")) {
+                // Increment the version for non-id fields
+                if (fieldName.equals("version")) {
+                    setClause.append(fieldName).append(" = ?, ");
+                } else {
+                    setClause.append(fieldName).append(" = ?, ");
+                }
+            }
+        }
+
+        setClause.delete(setClause.length() - 2, setClause.length());
+        setClause.append(" WHERE id = ? AND version = ?");
+
+        String query = "UPDATE " + className + " SET " + setClause;
+
+        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            int parameterIndex = 1;
+            for (Field field : fields) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+
+                if (!fieldName.equals("id")) {
+                    // Increment the version for non-id fields
+                    if (fieldName.equals("version")) {
+                        preparedStatement.setInt(parameterIndex++, version + 1);
+                    } else {
+                        Object value = field.get(object);
+                        preparedStatement.setObject(parameterIndex++, value);
+                    }
+                }
+            }
+
+            // Set the ID for the WHERE clause
+            Field idField = object.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            long objectId = (long) idField.get(object);
+            preparedStatement.setLong(parameterIndex++, objectId);
+
+            // Set the version for the WHERE clause
+            preparedStatement.setInt(parameterIndex++, version);
+
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows > 0) {
+                // Update the version in the object
+                setVersion(object, version + 1);
+                return object;
+            }
+
+        } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+
+        // Return null if update was unsuccessful
+        return null;
+    }
+
+    private static <T> int getVersion(T object) throws IllegalAccessException, NoSuchFieldException {
+        Field versionField = object.getClass().getDeclaredField("version");
+        versionField.setAccessible(true);
+        return versionField.getInt(object);
+    }
+
+    private static <T> void setVersion(T object, int newVersion) throws IllegalAccessException, NoSuchFieldException {
+        Field versionField = object.getClass().getDeclaredField("version");
+        versionField.setAccessible(true);
+        versionField.setInt(object, newVersion);
+    }
+
+    public void delete(Object object) {
+        String className = object.getClass().getSimpleName();
+        String query = "DELETE FROM " + className + " WHERE id = ?";
+
+        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            Field idField = object.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            long objectId = (long) idField.get(object);
+
+            preparedStatement.setLong(1, objectId);
+            preparedStatement.executeUpdate();
+
+        } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
     }
 }
