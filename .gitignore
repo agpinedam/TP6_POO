@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+
+# Java
+*.class
+*.jar
+
+# IntelliJ IDEA
+.idea/
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+# Visual Studio Code
+.vscode/
+
+# Logs
+*.log
+
+# Compiled bytecode
+*.class
+
+# Package Files
+*.jar
+*.war
+*.ear
+

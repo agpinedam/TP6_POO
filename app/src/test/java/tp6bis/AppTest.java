@@ -2,16 +2,21 @@ package tp6bis;
 
 import org.junit.jupiter.api.Test;
 
+import tp6bis.helpers.CreateRandomData;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.SQLException;
 
 class AppTest {
+    private CreateRandomData createRandomData = new CreateRandomData();
+
+
     @Test
     public void testPersistence() {
         Club club = new Club();
-        club.setFabricant("Fabricant");
-        club.setPoids(10.3);
+        club.setFabricant(createRandomData.createRandomCompanyName());
+        club.setPoids(createRandomData.createRandomPoids());
         EntityManagerImpl em = new EntityManagerImpl();
         em.createTable(club);
         Club createdClub = em.persist(club);
@@ -23,8 +28,8 @@ class AppTest {
     @Test
     public void testFind() throws SQLException {
         Club club = new Club();
-        club.setFabricant("FabricantTest");
-        club.setPoids(10.5);
+        club.setFabricant(createRandomData.createRandomCompanyName());
+        club.setPoids(createRandomData.createRandomPoids());
         EntityManagerImpl em = new EntityManagerImpl();
         Club createdClub = em.persist(club);
         Club trouve = em.<Club> find(Club.class, createdClub.getId());
@@ -34,12 +39,12 @@ class AppTest {
     @Test
     public void testUpdate() throws SQLException, IllegalAccessException, NoSuchFieldException{
         Club club = new Club();
-        club.setFabricant("FabricantUpdate");
-        club.setPoids(10.5);
+        club.setFabricant(createRandomData.createRandomCompanyName());
+        club.setPoids(createRandomData.createRandomPoids());
         EntityManagerImpl em = new EntityManagerImpl();
         Club createdClub = em.persist(club);
-        createdClub.setFabricant("NewName");
-        createdClub.setPoids(10.5);
+        createdClub.setFabricant(createRandomData.createRandomCompanyName());
+        createdClub.setPoids(createRandomData.createRandomPoids());
         Club updatedClub = em.update(createdClub);
         assertEquals(createdClub.getFabricant(), updatedClub.getFabricant());
         assertEquals(createdClub.getPoids(), updatedClub.getPoids());
@@ -49,8 +54,8 @@ class AppTest {
     @Test
     public void testDelete(){
         Club club = new Club();
-        club.setFabricant("FabricantDeleted");
-        club.setPoids(10.5);
+        club.setFabricant(createRandomData.createRandomCompanyName());
+        club.setPoids(createRandomData.createRandomPoids());
         EntityManagerImpl em = new EntityManagerImpl();
         Club createdClub = em.persist(club);
         em.delete(createdClub);

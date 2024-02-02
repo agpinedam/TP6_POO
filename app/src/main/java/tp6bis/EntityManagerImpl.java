@@ -2,7 +2,6 @@ package tp6bis;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,11 +9,13 @@ import java.sql.Statement;
 
 public class EntityManagerImpl {
 
-    private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/GolfClub";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "postgres";
+    private Connection connection;
 
-    // Method to create a table in PostgreSQL based on an object of a class
+    public EntityManagerImpl() {
+        this.connection = ConnectionPostgreSQL.getInstance();
+    }
+
+    // Método para crear una tabla en PostgreSQL basada en un objeto de una clase
     public void createTable(Object object) {
         String className = object.getClass().getSimpleName();
         if (tableExists(className)) {
@@ -22,52 +23,48 @@ public class EntityManagerImpl {
             return;
         }
 
-        // Get the fields of the class
+        // Obtener los campos de la clase
         Field[] fields = object.getClass().getDeclaredFields();
 
-        // Build the SQL query to create the table
+        // Construir la consulta SQL para crear la tabla
         StringBuilder sqlQuery = new StringBuilder("CREATE TABLE " + className + " (");
 
         for (Field field : fields) {
             String fieldName = field.getName();
             String fieldType = field.getType().getSimpleName();
 
-            // Adjust the id field to be serial (autoincrement) and the primary key
+            // Ajustar el campo id para que sea serial (autoincremental) y la clave primaria
             if (fieldName.equals("id")) {
                 sqlQuery.append(fieldName).append(" SERIAL PRIMARY KEY, ");
             } else {
-                // Assume all other fields are of primitive type or String in this example
+                // Suponer que todos los demás campos son de tipo primitivo o String en este ejemplo
                 sqlQuery.append(fieldName).append(" ").append(getSQLDataType(fieldType)).append(", ");
             }
         }
 
-        // Remove the extra comma at the end and close the query
+        // Eliminar la coma adicional al final y cerrar la consulta
         sqlQuery.delete(sqlQuery.length() - 2, sqlQuery.length()).append(");");
 
-        // Execute the SQL query
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             Statement statement = connection.createStatement()) {
+        // Ejecutar la consulta SQL
+        try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(sqlQuery.toString());
             System.out.println("Table created successfully.");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // Method to check if a table exists in the database
-    private static boolean tableExists(String tableName) {
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             Statement statement = connection.createStatement()) {
+    private boolean tableExists(String tableName) {
+        try (Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT to_regclass('" + tableName + "')");
             resultSet.next();
             return resultSet.getString(1) != null;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    // Method to map Java data types to SQL data types (simplified)
     private static String getSQLDataType(String javaType) {
         switch (javaType) {
             case "int":
@@ -81,18 +78,21 @@ public class EntityManagerImpl {
                 return "REAL";
             case "String":
                 return "VARCHAR(255)";
-            // Add more cases as needed for other data types
             default:
                 return "VARCHAR(255)";
         }
     }
+    // Método para cerrar la conexión
+    public void closeConnection() {
+        ConnectionPostgreSQL.closeConnection();
+    }
 
+    // Método para buscar un objeto por su ID
     public <T> T find(Class<T> entityClass, long id) {
         String tableName = entityClass.getSimpleName();
         String query = "SELECT * FROM " + tableName + " WHERE id = ?";
 
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setLong(1, id);
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -108,7 +108,7 @@ public class EntityManagerImpl {
         return null;
     }
 
-    private static <T> T mapResultSetToEntity(ResultSet resultSet, Class<T> entityClass) throws SQLException {
+   private static <T> T mapResultSetToEntity(ResultSet resultSet, Class<T> entityClass) throws SQLException {
         T entity;
         try {
             entity = entityClass.getDeclaredConstructor().newInstance();
@@ -130,76 +130,76 @@ public class EntityManagerImpl {
     public <T> T persist(T object) {
         String className = object.getClass().getSimpleName();
         Field[] fields = object.getClass().getDeclaredFields();
-
+    
         StringBuilder columnNames = new StringBuilder();
         StringBuilder values = new StringBuilder();
-
+    
         for (Field field : fields) {
             field.setAccessible(true);
             String fieldName = field.getName();
-
+    
             if (!fieldName.equals("id")) {
                 columnNames.append(fieldName).append(", ");
                 values.append("?, ");
             }
         }
-
+    
         columnNames.delete(columnNames.length() - 2, columnNames.length());
         values.delete(values.length() - 2, values.length());
-
+    
         String query = "INSERT INTO " + className + " (" + columnNames + ") VALUES (" + values + ")";
-
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
+    
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+    
             int parameterIndex = 1;
             for (Field field : fields) {
                 field.setAccessible(true);
                 String fieldName = field.getName();
-
+    
                 if (!fieldName.equals("id")) {
                     Object value = field.get(object);
                     preparedStatement.setObject(parameterIndex++, value);
                 }
             }
-
+    
             int affectedRows = preparedStatement.executeUpdate();
-
+    
             if (affectedRows > 0) {
-                // Retrieve the generated ID
+                // Obtener el ID generado
                 ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     long generatedId = generatedKeys.getLong(1);
-                    // Set the generated ID back to the object
+                    // Establecer el ID generado de nuevo en el objeto
                     Field idField = object.getClass().getDeclaredField("id");
                     idField.setAccessible(true);
                     idField.set(object, generatedId);
                     return object;
                 }
             }
-
+    
         } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
-
-        // Return null if creation was unsuccessful
+    
+        // Devolver null si la creación no tuvo éxito
         return null;
     }
-
-    public <T> T update(T object) throws IllegalAccessException, NoSuchFieldException {
+    
+    // Método para actualizar un objeto en la base de datos
+    public <T> T update(T object) throws IllegalAccessException, NoSuchFieldException, IllegalAccessException, NoSuchFieldException{
         String className = object.getClass().getSimpleName();
         Field[] fields = object.getClass().getDeclaredFields();
-
+    
         StringBuilder setClause = new StringBuilder();
-
+    
         int version = getVersion(object);
-
+    
         for (Field field : fields) {
             field.setAccessible(true);
             String fieldName = field.getName();
-
+    
             if (!fieldName.equals("id")) {
-                // Increment the version for non-id fields
+                // Incrementar la versión para los campos que no son id
                 if (fieldName.equals("version")) {
                     setClause.append(fieldName).append(" = ?, ");
                 } else {
@@ -207,22 +207,21 @@ public class EntityManagerImpl {
                 }
             }
         }
-
+    
         setClause.delete(setClause.length() - 2, setClause.length());
         setClause.append(" WHERE id = ? AND version = ?");
-
+    
         String query = "UPDATE " + className + " SET " + setClause;
-
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
+    
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+    
             int parameterIndex = 1;
             for (Field field : fields) {
                 field.setAccessible(true);
                 String fieldName = field.getName();
-
+    
                 if (!fieldName.equals("id")) {
-                    // Increment the version for non-id fields
+                    // Incrementar la versión para los campos que no son id
                     if (fieldName.equals("version")) {
                         preparedStatement.setInt(parameterIndex++, version + 1);
                     } else {
@@ -231,29 +230,29 @@ public class EntityManagerImpl {
                     }
                 }
             }
-
-            // Set the ID for the WHERE clause
+    
+            // Establecer el ID para la cláusula WHERE
             Field idField = object.getClass().getDeclaredField("id");
             idField.setAccessible(true);
             long objectId = (long) idField.get(object);
             preparedStatement.setLong(parameterIndex++, objectId);
-
-            // Set the version for the WHERE clause
+    
+            // Establecer la versión para la cláusula WHERE
             preparedStatement.setInt(parameterIndex++, version);
-
+    
             int affectedRows = preparedStatement.executeUpdate();
-
+    
             if (affectedRows > 0) {
-                // Update the version in the object
+                // Actualizar la versión en el objeto
                 setVersion(object, version + 1);
                 return object;
             }
-
+    
         } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
-
-        // Return null if update was unsuccessful
+    
+        // Devolver null si la actualización no tuvo éxito
         return null;
     }
 
@@ -268,21 +267,21 @@ public class EntityManagerImpl {
         versionField.setAccessible(true);
         versionField.setInt(object, newVersion);
     }
-
+    
+    // Método para eliminar un objeto de la base de datos
     public void delete(Object object) {
         String className = object.getClass().getSimpleName();
         String query = "DELETE FROM " + className + " WHERE id = ?";
-
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
+    
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+    
             Field idField = object.getClass().getDeclaredField("id");
             idField.setAccessible(true);
             long objectId = (long) idField.get(object);
-
+    
             preparedStatement.setLong(1, objectId);
             preparedStatement.executeUpdate();
-
+    
         } catch (SQLException | IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
