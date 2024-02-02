@@ -54,7 +54,6 @@ public class EntityManagerImpl {
         }
     }
 
-    // Método para verificar si una tabla existe en la base de datos
     private boolean tableExists(String tableName) {
         try (Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("SELECT to_regclass('" + tableName + "')");
@@ -79,7 +78,6 @@ public class EntityManagerImpl {
                 return "REAL";
             case "String":
                 return "VARCHAR(255)";
-            // Agrega más casos según sea necesario para otros tipos de datos
             default:
                 return "VARCHAR(255)";
         }

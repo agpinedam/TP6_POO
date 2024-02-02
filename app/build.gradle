@@ -25,7 +25,8 @@ dependencies {
     implementation 'com.google.guava:guava:32.1.1-jre'  
 
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.1'
-
+    // https://mvnrepository.com/artifact/com.github.javafaker/javafaker
+    implementation group: 'com.github.javafaker', name: 'javafaker', version: '1.0.2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
